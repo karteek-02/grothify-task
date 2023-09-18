@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const axios = require('axios');
 const cors = require("cors")
+require('dotenv').config();
 
 const app = express();
 
@@ -19,8 +20,8 @@ app.post("/api/task", async (req, res) => {
             method: 'post',
             url: "https://api.dataforseo.com/v3/on_page/task_post",
             auth: {
-                username: process.env.USERNAME,
-                password: process.env.PASSWORD,
+                username: 'karteekkarteek007@gmail.com',
+                password: 'd16470eab6eaec2a',
             },
             data: [
                 {
@@ -52,8 +53,8 @@ app.post("/api/page_score", async (req, res) => {
             method: 'post',
             url: "https://api.dataforseo.com/v3/on_page/pages",
             auth: {
-                username: process.env.USERNAME,
-                password: process.env.PASSWORD,
+                username: 'karteekkarteek007@gmail.com',
+                password: 'd16470eab6eaec2a',
             },
             data: [{
                 "id": id,
@@ -62,10 +63,9 @@ app.post("/api/page_score", async (req, res) => {
                 'content-type': 'application/json'
             }
         });
-        const report = response.data;
 
-        const content = report.result.items[0];
-        res.status(200).json({ result: content });
+        const report = response.data;
+        res.status(200).json({ result: report.tasks[0].result[0] });
     } catch (e) {
         console.log(e);
         res.status(500).json({ error: JSON.stringify(e) });

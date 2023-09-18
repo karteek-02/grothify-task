@@ -62,6 +62,7 @@ const SEOReport = () => {
   };
 
   const fetchScores = async () => {
+    try{
     const resourceRes = await fetch("https://growthify-server.onrender.com/api/page_score", {
       method: 'POST',
       body: JSON.stringify({
@@ -73,12 +74,12 @@ const SEOReport = () => {
     });
 
     const resourceData = await resourceRes.json();
+    
 
     if (resourceData.result.crawl_progress === "in_progress" || resourceData.result == null) {
       alert("Crawl in progress. Please try again after some time.");
       return
     }
-    console.log(resourceData.result)
     const textData = resourceData.result.items[0].meta.content;
     const htagsData = resourceData.result.items[0].meta.external_links_count;
     const scriptsCountData = resourceData.result.items[0].meta.scripts_count;
@@ -96,6 +97,11 @@ const SEOReport = () => {
     setOnPageScore(onpagescoredata);
     setShowIframe(true);
     setPageData(scores);
+    } catch (error) {
+      console.error('Error fetching SEO report:', error);
+      setError('Error fetching SEO report.');
+      alert("Data fetching failed.");
+    }
   }
 
   return (
