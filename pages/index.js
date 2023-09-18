@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import Card from '@/components/card';
-import CircleComponent from '@/components/circle';
+import Circle from '@/components/circle';
 
 const SEOReport = () => {
   const [url, setUrl] = useState('');
@@ -9,7 +9,11 @@ const SEOReport = () => {
   const [showIframe, setShowIframe] = useState(false);
   const [pageData, setPageData] = useState(null);
   const [taskId, setTaskId] = useState(null);
+  const [onPageScore, setOnPageScore] = useState(null);
   const [show, setShow] = useState(false);
+  const [externalLinksCount, setExternalLinksCount] = useState(null);
+  const [scriptsCount, setScriptsCount] = useState(null);
+  const [scriptsSize, setScriptsSize] = useState(null);
   const iframeRef = useRef();
 
   const handleUrlChange = (e) => {
@@ -36,7 +40,7 @@ const SEOReport = () => {
 
   const postTask = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/task", {
+      const res = await fetch("https://growthify-server.onrender.com/api/task", {
         method: 'POST',
         body: JSON.stringify({
           url: url
@@ -58,7 +62,7 @@ const SEOReport = () => {
   };
 
   const fetchScores = async () => {
-    const resourceRes = await fetch("http://localhost:5000/api/page_score", {
+    const resourceRes = await fetch("https://growthify-server.onrender.com/api/page_score", {
       method: 'POST',
       body: JSON.stringify({
         id: taskId
@@ -67,15 +71,31 @@ const SEOReport = () => {
         'Content-Type': 'application/json'
       }
     });
+
     const resourceData = await resourceRes.json();
-    console.log(resourceData);
-    if (resourceData.result.crawl_progress === "in_progress") {
+
+    if (resourceData.result.crawl_progress === "in_progress" || resourceData.result == null) {
       alert("Crawl in progress. Please try again after some time.");
-      return;
+      return
     }
-    //map in a state variable
-    // const scores = [];
+    console.log(resourceData.result)
+    const textData = resourceData.result.items[0].meta.content;
+    const htagsData = resourceData.result.items[0].meta.external_links_count;
+    const scriptsCountData = resourceData.result.items[0].meta.scripts_count;
+    const scriptsSizeData = resourceData.result.items[0].meta.scripts_size;
+    const onpagescoredata = resourceData.result.items[0].onpage_score;
+    console.log(onpagescoredata);
+    console.log(resourceData);
+    const scores = Object.entries(textData).map(([key, value]) => ({
+      label: key,
+      score: value
+    }));
+    setExternalLinksCount(htagsData);
+    setScriptsCount(scriptsCountData);
+    setScriptsSize(scriptsSizeData);
+    setOnPageScore(onpagescoredata);
     setShowIframe(true);
+    setPageData(scores);
   }
 
   return (
@@ -104,42 +124,33 @@ const SEOReport = () => {
           Get On-Page Score
         </button>}
       </div>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {showIframe && url && (
-        <iframe
-          ref={iframeRef}
-          className='my-4'
-          src={url}
-          title="Website Viewer"
-          width="100%"
-          height="500px"
-        ></iframe>
+      {error && <p style={{ color: 'red' }}>{error}</p>}<br></br>
+
+      {onPageScore && (
+        <Circle score={onPageScore} description="On-Page Score" />
       )}
+
       <div className="grid grid-cols-3 gap-2 my-4">
-        {["hi", "test", "tresting", "breast"].map((item, idx) => {
-          return (
-            <Card
-              key={idx}
-              score={idx}
-              description={item}
-            />
-          )
-        })
-        }
-      </div>
-      <div className="grid grid-cols-3 gap-2 my-4">
-        {["hi", "test", "tresting", "breast"].map((item, idx) => {
-          return (
-            <CircleComponent
-              key={idx}
-              score={idx}
-              description={item}
-            />
-          )
-        })
-        }
+        {externalLinksCount && (
+          <Card score={externalLinksCount} description="external_links_count" />
+        )}
+
+        {scriptsCount && (
+          <Card score={scriptsCount} description="scripts_count" />
+        )}
+
+        {scriptsSize && (
+          <Card score={scriptsSize} description="scripts_size" />
+        )}
       </div>
 
+      {pageData && (
+        <div className="grid grid-cols-3 gap-2 my-4">
+          {pageData.map((item, idx) => (
+            <Card key={idx} score={item.score} description={item.label} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

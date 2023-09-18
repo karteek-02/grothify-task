@@ -44,6 +44,7 @@ app.post("/api/task", async (req, res) => {
     }
 });
 
+
 app.post("/api/page_score", async (req, res) => {
     try {
         const { id } = req.body;
@@ -51,8 +52,8 @@ app.post("/api/page_score", async (req, res) => {
             method: 'post',
             url: "https://api.dataforseo.com/v3/on_page/pages",
             auth: {
-                username: 'karteekkarteek007@gmail.com',
-                password: 'd16470eab6eaec2a',
+                username: process.env.USERNAME,
+                password: process.env.PASSWORD,
             },
             data: [{
                 "id": id,
@@ -62,7 +63,9 @@ app.post("/api/page_score", async (req, res) => {
             }
         });
         const report = response.data;
-        res.status(200).json({ result: report.tasks[0].result[0] });
+
+        const content = report.result.items[0];
+        res.status(200).json({ result: content });
     } catch (e) {
         console.log(e);
         res.status(500).json({ error: JSON.stringify(e) });
