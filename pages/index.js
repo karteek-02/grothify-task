@@ -1,118 +1,147 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
+import Card from '@/components/card';
+import CircleComponent from '@/components/circle';
 
-const inter = Inter({ subsets: ['latin'] })
+const SEOReport = () => {
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState(null);
+  const [showIframe, setShowIframe] = useState(false);
+  const [pageData, setPageData] = useState(null);
+  const [taskId, setTaskId] = useState(null);
+  const [show, setShow] = useState(false);
+  const iframeRef = useRef();
 
-export default function Home() {
+  const handleUrlChange = (e) => {
+    setUrl(e.target.value);
+  };
+
+  const loadWebsite = () => {
+    if (!isValidUrl(url)) {
+      setError('Please enter a valid URL.');
+      return;
+    }
+    setError(null);
+    postTask();
+  };
+
+  const isValidUrl = (value) => {
+    try {
+      new URL(value);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const postTask = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/task", {
+        method: 'POST',
+        body: JSON.stringify({
+          url: url
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      console.log(data);
+      setTaskId(data.result.tasks[0].id);
+      alert("Task created successfully");
+      setShow(true);
+    } catch (error) {
+      console.error('Error fetching SEO report:', error);
+      setError('Error fetching SEO report.');
+      alert("Task creation failed.");
+    }
+  };
+
+  const fetchScores = async () => {
+    const resourceRes = await fetch("http://localhost:5000/api/page_score", {
+      method: 'POST',
+      body: JSON.stringify({
+        id: taskId
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    const resourceData = await resourceRes.json();
+    console.log(resourceData);
+    if (resourceData.result.crawl_progress === "in_progress") {
+      alert("Crawl in progress. Please try again after some time.");
+      return;
+    }
+    //map in a state variable
+    // const scores = [];
+    setShowIframe(true);
+  }
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+    <div className='flex flex-col py-16 px-16 items-center bg-[#181a1b] min-h-screen'>
+      <h1 className='text-2xl font-bold text-blue-200'>SEO Report</h1>
+      <div className='w-2/3'>
+        <input
+          type="text"
+          className='border-2 p-2 my-4 border-blue-400 rounded font-semibold w-full text-black'
+          placeholder="Enter URL (e.g., https://example.com)"
+          value={url}
+          onChange={handleUrlChange}
         />
       </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
+      <div className='flex flex-cols gap-2'>
+        <button
+          onClick={loadWebsite}
+          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
         >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
+          Get SEO Report
+        </button>
+        {show && <button
+          onClick={() => fetchScores()}
+          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
         >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+          Get On-Page Score
+        </button>}
       </div>
-    </main>
-  )
-}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {showIframe && url && (
+        <iframe
+          ref={iframeRef}
+          className='my-4'
+          src={url}
+          title="Website Viewer"
+          width="100%"
+          height="500px"
+        ></iframe>
+      )}
+      <div className="grid grid-cols-3 gap-2 my-4">
+        {["hi", "test", "tresting", "breast"].map((item, idx) => {
+          return (
+            <Card
+              key={idx}
+              score={idx}
+              description={item}
+            />
+          )
+        })
+        }
+      </div>
+      <div className="grid grid-cols-3 gap-2 my-4">
+        {["hi", "test", "tresting", "breast"].map((item, idx) => {
+          return (
+            <CircleComponent
+              key={idx}
+              score={idx}
+              description={item}
+            />
+          )
+        })
+        }
+      </div>
+
+    </div>
+  );
+};
+
+export default SEOReport;
